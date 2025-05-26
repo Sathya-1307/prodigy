@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            background-color: #333;
+            padding: 8px;
+            border-radius: 12px;
+            margin: 20px auto;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .sudoku-cell {
+            width: 45px;
+            height: 45px;
+            border: none;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .sudoku-cell:focus {
+            outline: 3px solid #667eea;
+            background: #f0f4ff;
+            transform: scale(1.05);
+        }
+
+        .sudoku-cell.given {
+            background: #e8f2ff;
+            color: #2c5aa0;
+            font-weight: 900;
+        }
+
+        .sudoku-cell.solved {
+            background: #d4edda;
+            color: #155724;
+            animation: solved 0.5s ease;
+        }
+
+        @keyframes solved {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-solve {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-solve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-clear {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-clear:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-example {
+            background: linear-gradient(45deg, #6f42c1, #e83e8c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+        }
+
+        .btn-example:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: 600;
+            min-height: 25px;
+        }
+
+        .status.solving {
+            color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        .status.solved {
+            color: #28a745;
+        }
+
+        .status.error {
+            color: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .algorithm-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .algorithm-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .algorithm-info p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Grid borders for 3x3 sections */
+        .sudoku-cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 3px solid #333;
+        }
+
+        .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+        .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 3px solid #333;
+        }
+
+        @media (max-width: 480px) {
+            .sudoku-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 Sudoku Solver</h1>
+        
+        <div class="sudoku-grid" id="sudokuGrid"></div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="controls">
+            <button class="btn-solve" onclick="solveSudoku()">Solve Puzzle</button>
+            <button class="btn-clear" onclick="clearGrid()">Clear Grid</button>
+            <button class="btn-example" onclick="loadExample()">Load Example</button>
+        </div>
+        
+        <div class="algorithm-info">
+            <h3>🔍 Algorithm: Backtracking</h3>
+            <p>This solver uses a recursive backtracking algorithm that tries numbers 1-9 in each empty cell, validates Sudoku rules, and backtracks when conflicts arise. It systematically explores all possibilities until finding the unique solution.</p>
+        </div>
+    </div>
+
+    <script>
+        // Sudoku Solver Implementation (JavaScript version of Java algorithm)
+        class SudokuSolver {
+            constructor() {
+                this.grid = Array(9).fill().map(() => Array(9).fill(0));
+                this.originalGrid = Array(9).fill().map(() => Array(9).fill(0));
+            }
+
+            // Check if placing num at grid[row][col] is valid
+            isValid(grid, row, col, num) {
+                // Check row
+                for (let x = 0; x < 9; x++) {
+                    if (grid[row][x] === num) return false;
+                }
+
+                // Check column
+                for (let x = 0; x < 9; x++) {
+                    if (grid[x][col] === num) return false;
+                }
+
+                // Check 3x3 box
+                let startRow = row - row % 3;
+                let startCol = col - col % 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (grid[i + startRow][j + startCol] === num) return false;
+                    }
+                }
+
+                return true;
+            }
+
+            // Recursive backtracking solver
+            async solve(grid, row = 0, col = 0, visualize = false) {
+                // If we've reached the end of the grid
+                if (row === 9) return true;
+
+                // Move to next row if we've reached end of current row
+                if (col === 9) return await this.solve(grid, row + 1, 0, visualize);
+
+                // If cell is already filled, move to next cell
+                if (grid[row][col] !== 0) {
+                    return await this.solve(grid, row, col + 1, visualize);
+                }
+
+                // Try numbers 1-9
+                for (let num = 1; num <= 9; num++) {
+                    if (this.isValid(grid, row, col, num)) {
+                        grid[row][col] = num;
+                        
+                        // Visualize the solving process
+                        if (visualize) {
+                            this.updateCellVisual(row, col, num, 'solving');
+                            await this.delay(50);
+                        }
+
+                        // Recursively solve
+                        if (await this.solve(grid, row, col + 1, visualize)) {
+                            return true;
+                        }
+
+                        // Backtrack
+                        grid[row][col] = 0;
+                        if (visualize) {
+                            this.updateCellVisual(row, col, '', 'backtrack');
+                            await this.delay(30);
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            updateCellVisual(row, col, value, type) {
+                const cell = document.getElementById(`cell-${row}-${col}`);
+                if (cell && !cell.classList.contains('given')) {
+                    cell.value = value;
+                    
+                    if (type === 'solving' && value) {
+                        cell.style.background = '#fff3cd';
+                        cell.style.color = '#856404';
+                    } else if (type === 'backtrack') {
+                        cell.style.background = '#f8d7da';
+                        cell.style.color = '#721c24';
+                    }
+                    
+                    setTimeout(() => {
+                        if (value && type === 'solving') {
+                            cell.style.background = '#d4edda';
+                            cell.style.color = '#155724';
+                            cell.classList.add('solved');
+                        }
+                    }, 100);
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // Load grid from HTML input
+            loadFromHTML() {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        const cell = document.getElementById(`cell-${i}-${j}`);
+                        const value = parseInt(cell.value) || 0;
+                        this.grid[i][j] = value;
+                        this.originalGrid[i][j] = value;
+                    }
+                }
+            }
+
+            // Display solution in HTML
+            displaySolution() {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        const cell = document.getElementById(`cell-${i}-${j}`);
+                        if (this.originalGrid[i][j] === 0) {
+                            cell.value = this.grid[i][j];
+                            cell.classList.add('solved');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Global solver instance
+        const solver = new SudokuSolver();
+
+        // Initialize grid
+        function initializeGrid() {
+            const grid = document.getElementById('sudokuGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '1';
+                    input.max = '9';
+                    input.className = 'sudoku-cell';
+                    input.id = `cell-${i}-${j}`;
+                    
+                    input.addEventListener('input', function(e) {
+                        let value = e.target.value;
+                        if (value && (value < 1 || value > 9 || value.length > 1)) {
+                            e.target.value = '';
+                        }
+                        if (value) {
+                            e.target.classList.add('given');
+                        } else {
+                            e.target.classList.remove('given');
+                        }
+                    });
+                    
+                    grid.appendChild(input);
+                }
+            }
+        }
+
+        // Solve sudoku with visualization
+        async function solveSudoku() {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = '🔄 Solving puzzle...';
+            statusEl.className = 'status solving';
+            
+            // Clear previous solution styling
+            document.querySelectorAll('.sudoku-cell').forEach(cell => {
+                if (!cell.classList.contains('given')) {
+                    cell.classList.remove('solved');
+                    cell.style.background = '';
+                    cell.style.color = '';
+                }
+            });
+            
+            solver.loadFromHTML();
+            
+            // Validate input
+            if (!isValidInput()) {
+                statusEl.textContent = '❌ Invalid puzzle input!';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            const startTime = Date.now();
+            const solved = await solver.solve([...solver.grid.map(row => [...row])], 0, 0, true);
+            const endTime = Date.now();
+            
+            if (solved) {
+                statusEl.textContent = `✅ Puzzle solved in ${endTime - startTime}ms!`;
+                statusEl.className = 'status solved';
+            } else {
+                statusEl.textContent = '❌ No solution exists for this puzzle!';
+                statusEl.className = 'status error';
+            }
+        }
+
+        // Clear the grid
+        function clearGrid() {
+            document.querySelectorAll('.sudoku-cell').forEach(cell => {
+                cell.value = '';
+                cell.className = 'sudoku-cell';
+                cell.style.background = '';
+                cell.style.color = '';
+            });
+            document.getElementById('status').textContent = '';
+            document.getElementById('status').className = 'status';
+        }
+
+        // Load example puzzle
+        function loadExample() {
+            const example = [
+                [5,3,0,0,7,0,0,0,0],
+                [6,0,0,1,9,5,0,0,0],
+                [0,9,8,0,0,0,0,6,0],
+                [8,0,0,0,6,0,0,0,3],
+                [4,0,0,8,0,3,0,0,1],
+                [7,0,0,0,2,0,0,0,6],
+                [0,6,0,0,0,0,2,8,0],
+                [0,0,0,4,1,9,0,0,5],
+                [0,0,0,0,8,0,0,7,9]
+            ];
+            
+            clearGrid();
+            
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (example[i][j] !== 0) {
+                        cell.value = example[i][j];
+                        cell.classList.add('given');
+                    }
+                }
+            }
+            
+            document.getElementById('status').textContent = '📝 Example puzzle loaded!';
+            document.getElementById('status').className = 'status';
+        }
+
+        // Validate input puzzle
+        function isValidInput() {
+            solver.loadFromHTML();
+            
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (solver.grid[i][j] !== 0) {
+                        const temp = solver.grid[i][j];
+                        solver.grid[i][j] = 0;
+                        if (!solver.isValid(solver.grid, i, j, temp)) {
+                            solver.grid[i][j] = temp;
+                            return false;
+                        }
+                        solver.grid[i][j] = temp;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Initialize the application
+        window.onload = function() {
+            initializeGrid();
+            loadExample();
+        };
+    </script>
+</body>
+</html>
