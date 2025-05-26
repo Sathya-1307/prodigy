@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .unit-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .unit-option {
+            position: relative;
+        }
+
+        .unit-option input[type="radio"] {
+            display: none;
+        }
+
+        .unit-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        .unit-option input[type="radio"]:checked + label {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9ff, #f1f3ff);
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e1e5e9;
+            font-size: 1.1rem;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #333;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #c53030;
+            margin-top: 15px;
+            display: none;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 20%, 40%, 60%, 80% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+        }
+
+        .temperature-icon {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+
+        .clear-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .clear-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .unit-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌡️ Temperature Converter</h1>
+            <p>Convert between Celsius, Fahrenheit, and Kelvin</p>
+        </div>
+        
+        <form id="temperatureForm">
+            <div class="form-group">
+                <label for="temperature">Temperature Value:</label>
+                <input type="number" id="temperature" step="0.01" placeholder="Enter temperature..." required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select Original Unit:</label>
+                <div class="unit-selector">
+                    <div class="unit-option">
+                        <input type="radio" id="celsius" name="unit" value="C" checked>
+                        <label for="celsius">°C Celsius</label>
+                    </div>
+                    <div class="unit-option">
+                        <input type="radio" id="fahrenheit" name="unit" value="F">
+                        <label for="fahrenheit">°F Fahrenheit</label>
+                    </div>
+                    <div class="unit-option">
+                        <input type="radio" id="kelvin" name="unit" value="K">
+                        <label for="kelvin">K Kelvin</label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="convert-btn">🔄 Convert Temperature</button>
+            <button type="button" class="clear-btn" id="clearBtn">🗑️ Clear Results</button>
+        </form>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="results" id="results">
+            <h3>🎯 Conversion Results</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Temperature conversion functions
+        function celsiusToFahrenheit(celsius) {
+            return (celsius * 9/5) + 32;
+        }
+
+        function celsiusToKelvin(celsius) {
+            return celsius + 273.15;
+        }
+
+        function fahrenheitToCelsius(fahrenheit) {
+            return (fahrenheit - 32) * 5/9;
+        }
+
+        function fahrenheitToKelvin(fahrenheit) {
+            const celsius = fahrenheitToCelsius(fahrenheit);
+            return celsiusToKelvin(celsius);
+        }
+
+        function kelvinToCelsius(kelvin) {
+            return kelvin - 273.15;
+        }
+
+        function kelvinToFahrenheit(kelvin) {
+            const celsius = kelvinToCelsius(kelvin);
+            return celsiusToFahrenheit(celsius);
+        }
+
+        // Validation function
+        function validateTemperature(temperature, unit) {
+            switch (unit) {
+                case 'K':
+                    if (temperature < 0) {
+                        return "Kelvin temperature cannot be negative (absolute zero is 0K).";
+                    }
+                    break;
+                case 'C':
+                    if (temperature < -273.15) {
+                        return "Celsius temperature cannot be below -273.15°C (absolute zero).";
+                    }
+                    break;
+                case 'F':
+                    if (temperature < -459.67) {
+                        return "Fahrenheit temperature cannot be below -459.67°F (absolute zero).";
+                    }
+                    break;
+            }
+            return null;
+        }
+
+        // Display results function
+        function displayResults(temperature, unit) {
+            const resultContent = document.getElementById('resultContent');
+            let html = '';
+
+            switch (unit) {
+                case 'C':
+                    const fahrenheit = celsiusToFahrenheit(temperature);
+                    const kelvin = celsiusToKelvin(temperature);
+                    
+                    html = `
+                        <div class="result-item">
+                            <span class="result-label">🌡️ Original (Celsius):</span>
+                            <span class="result-value">${temperature.toFixed(2)}°C</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">🔥 Fahrenheit:</span>
+                            <span class="result-value">${fahrenheit.toFixed(2)}°F</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">⚗️ Kelvin:</span>
+                            <span class="result-value">${kelvin.toFixed(2)}K</span>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'F':
+                    const celsiusFromF = fahrenheitToCelsius(temperature);
+                    const kelvinFromF = fahrenheitToKelvin(temperature);
+                    
+                    html = `
+                        <div class="result-item">
+                            <span class="result-label">🔥 Original (Fahrenheit):</span>
+                            <span class="result-value">${temperature.toFixed(2)}°F</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">🌡️ Celsius:</span>
+                            <span class="result-value">${celsiusFromF.toFixed(2)}°C</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">⚗️ Kelvin:</span>
+                            <span class="result-value">${kelvinFromF.toFixed(2)}K</span>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'K':
+                    const celsiusFromK = kelvinToCelsius(temperature);
+                    const fahrenheitFromK = kelvinToFahrenheit(temperature);
+                    
+                    html = `
+                        <div class="result-item">
+                            <span class="result-label">⚗️ Original (Kelvin):</span>
+                            <span class="result-value">${temperature.toFixed(2)}K</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">🌡️ Celsius:</span>
+                            <span class="result-value">${celsiusFromK.toFixed(2)}°C</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">🔥 Fahrenheit:</span>
+                            <span class="result-value">${fahrenheitFromK.toFixed(2)}°F</span>
+                        </div>
+                    `;
+                    break;
+            }
+
+            resultContent.innerHTML = html;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Show error function
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Hide error function
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Form submission handler
+        document.getElementById('temperatureForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            hideError();
+            
+            const temperatureInput = document.getElementById('temperature');
+            const temperature = parseFloat(temperatureInput.value);
+            const unit = document.querySelector('input[name="unit"]:checked').value;
+            
+            // Validate input
+            if (isNaN(temperature)) {
+                showError('Please enter a valid temperature value.');
+                return;
+            }
+            
+            // Validate temperature range
+            const validationError = validateTemperature(temperature, unit);
+            if (validationError) {
+                showError(validationError);
+                return;
+            }
+            
+            // Display results
+            displayResults(temperature, unit);
+        });
+
+        // Clear button handler
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('temperature').value = '';
+            document.getElementById('results').style.display = 'none';
+            hideError();
+            
+            // Reset to Celsius
+            document.getElementById('celsius').checked = true;
+        });
+
+        // Real-time conversion on input change
+        document.getElementById('temperature').addEventListener('input', function() {
+            const temperature = parseFloat(this.value);
+            const unit = document.querySelector('input[name="unit"]:checked').value;
+            
+            if (!isNaN(temperature) && temperature !== '') {
+                const validationError = validateTemperature(temperature, unit);
+                if (!validationError) {
+                    displayResults(temperature, unit);
+                    hideError();
+                }
+            }
+        });
+
+        // Real-time conversion on unit change
+        document.querySelectorAll('input[name="unit"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const temperatureInput = document.getElementById('temperature');
+                const temperature = parseFloat(temperatureInput.value);
+                
+                if (!isNaN(temperature) && temperature !== '') {
+                    const validationError = validateTemperature(temperature, this.value);
+                    if (!validationError) {
+                        displayResults(temperature, this.value);
+                        hideError();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
